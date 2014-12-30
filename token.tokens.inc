@@ -57,7 +57,7 @@ function token_token_info_alter(&$info) {
     if (!isset($info['tokens'][$token_type]['url']) && !empty($entity_info['uri callback'])) {
       $info['tokens'][$token_type]['url'] = array(
         'name' => t('URL'),
-        'description' => t('The URL of the @entity.', array('@entity' => drupal_strtolower($entity_info['label']))),
+        'description' => t('The URL of the @entity.', array('@entity' => backdrop_strtolower($entity_info['label']))),
         'module' => 'token',
         'type' => 'url',
       );
@@ -66,8 +66,8 @@ function token_token_info_alter(&$info) {
     // Add [entity:original] tokens if they do not already exist.
     if (!isset($info['tokens'][$token_type]['original'])) {
       $info['tokens'][$token_type]['original'] = array(
-        'name' => t('Original @entity', array('@entity' => drupal_strtolower($entity_info['label']))),
-        'description' => t('The original @entity data if the @entity is being updated or saved.', array('@entity' => drupal_strtolower($entity_info['label']))),
+        'name' => t('Original @entity', array('@entity' => backdrop_strtolower($entity_info['label']))),
+        'description' => t('The original @entity data if the @entity is being updated or saved.', array('@entity' => backdrop_strtolower($entity_info['label']))),
         'module' => 'token',
         'type' => $token_type,
       );
@@ -195,7 +195,7 @@ function token_token_info() {
     'restricted' => TRUE,
     // 'type' => 'url',
   );
-  if (variable_get('user_pictures', 0)) {
+  if (config('token.settings')->get('user_pictures')) {
     $info['tokens']['user']['picture'] = array(
       'name' => t('Picture'),
       'description' => t('The picture of the user.'),
@@ -368,6 +368,7 @@ function token_token_info() {
  */
 function token_tokens($type, $tokens, array $data = array(), array $options = array()) {
   $replacements = array();
+  $config = config('token.settings');
 
   $url_options = array('absolute' => TRUE);
   if (isset($options['language'])) {
@@ -563,7 +564,7 @@ function token_tokens($type, $tokens, array $data = array(), array $options = ar
     foreach ($tokens as $name => $original) {
       switch ($name) {
         case 'picture':
-          if (variable_get('user_pictures', 0)) {
+          if ($config->get('user_pictures')) {
             $replacements[$original] = theme('user_picture', array('account' => $account));
           }
           break;
@@ -577,7 +578,7 @@ function token_tokens($type, $tokens, array $data = array(), array $options = ar
     }
 
     // Chained token relationships.
-    if (variable_get('user_pictures', 0) && !empty($account->picture) && ($picture_tokens = token_find_with_prefix($tokens, 'picture'))) {
+    if ($config->get('user_pictures') && !empty($account->picture) && ($picture_tokens = token_find_with_prefix($tokens, 'picture'))) {
       // @todo Remove when core bug http://drupal.org/node/978028 is fixed.
       $account->picture->description = '';
       $replacements += token_generate('file', $picture_tokens, array('file' => $account->picture), $options);
@@ -668,7 +669,7 @@ function token_tokens($type, $tokens, array $data = array(), array $options = ar
     foreach ($tokens as $name => $original) {
       switch ($name) {
         case 'title':
-          $title = drupal_get_title();
+          $title = backdrop_get_title();
           $replacements[$original] = $sanitize ? $title : decode_entities($title);
           break;
         case 'url':
@@ -723,12 +724,12 @@ function token_tokens($type, $tokens, array $data = array(), array $options = ar
     foreach ($tokens as $name => $original) {
       switch ($name) {
         case 'path':
-          $value = empty($url_options['alias']) ? drupal_get_path_alias($path, $language_code) : $path;
+          $value = empty($url_options['alias']) ? backdrop_get_path_alias($path, $language_code) : $path;
           $replacements[$original] = $sanitize ? check_plain($value) : $value;
           break;
         case 'alias':
           // @deprecated
-          $alias = drupal_get_path_alias($path, $language_code);
+          $alias = backdrop_get_path_alias($path, $language_code);
           $replacements[$original] = $sanitize ? check_plain($alias) : $alias;
           break;
         case 'absolute':
@@ -744,7 +745,7 @@ function token_tokens($type, $tokens, array $data = array(), array $options = ar
           $replacements[$original] = url($path, array('alias' => TRUE) + $url_options);
           break;
         case 'args':
-          $value = empty($url_options['alias']) ? drupal_get_path_alias($path, $language_code) : $path;
+          $value = empty($url_options['alias']) ? backdrop_get_path_alias($path, $language_code) : $path;
           $replacements[$original] = token_render_array(arg(NULL, $value), $options);
           break;
       }
@@ -752,7 +753,7 @@ function token_tokens($type, $tokens, array $data = array(), array $options = ar
 
     // [url:arg:*] chained tokens.
     if ($arg_tokens = token_find_with_prefix($tokens, 'args')) {
-      $value = empty($url_options['alias']) ? drupal_get_path_alias($path, $language_code) : $path;
+      $value = empty($url_options['alias']) ? backdrop_get_path_alias($path, $language_code) : $path;
       $replacements += token_generate('array', $arg_tokens, array('array' => arg(NULL, $value)), $options);
     }
 
@@ -891,7 +892,7 @@ function token_tokens($type, $tokens, array $data = array(), array $options = ar
       $algos = hash_algos();
       foreach ($hash_tokens as $name => $original) {
         if (in_array($name, $algos)) {
-          $replacements[$original] = hash($name, drupal_random_bytes(55));
+          $replacements[$original] = hash($name, backdrop_random_bytes(55));
         }
       }
     }
@@ -907,7 +908,7 @@ function token_tokens($type, $tokens, array $data = array(), array $options = ar
 
   // If the token type specifics a 'needs-data' value, and the value is not
   // present in $data, then throw an error.
-  if (!empty($GLOBALS['drupal_test_info']['test_run_id'])) {
+  if (!empty($GLOBALS['backdrop_test_info']['test_run_id'])) {
     // Only check when tests are running.
     $type_info = token_get_info($type);
     if (!empty($type_info['needs-data']) && !isset($data[$type_info['needs-data']])) {
@@ -942,7 +943,7 @@ function token_tokens_alter(array &$replacements, array $context) {
             $account = user_load($comment->uid);
           }
           else {
-            $account = drupal_anonymous_user();
+            $account = backdrop_anonymous_user();
             $account->name = $comment->name;
           }
           $name = format_username($account);
@@ -1186,7 +1187,7 @@ function profile_token_info() {
   foreach (_token_profile_fields() as $field) {
     $info['tokens']['user'][$field->token_name] = array(
       'name' => check_plain($field->title),
-      'description' => t('@category @type field.', array('@category' => drupal_ucfirst($field->category), '@type' => $field->type)),
+      'description' => t('@category @type field.', array('@category' => backdrop_ucfirst($field->category), '@type' => $field->type)),
     );
 
     switch ($field->type) {
@@ -1266,7 +1267,7 @@ function profile_tokens($type, $tokens, array $data = array(), array $options = 
  * Fetch an array of profile field objects, keyed by token name.
  */
 function _token_profile_fields() {
-  $fields = &drupal_static(__FUNCTION__);
+  $fields = &backdrop_static(__FUNCTION__);
 
   if (!isset($fields)) {
     $fields = array();
@@ -1284,10 +1285,12 @@ function _token_profile_fields() {
  * Fetch an array of field data used for tokens.
  */
 function _token_field_info($field_name = NULL) {
-  $info = &drupal_static(__FUNCTION__);
+  $info = &backdrop_static(__FUNCTION__);
+
+  $cache_token = cache('token');
 
   if (!isset($fields)) {
-    if ($cached = cache('token')->get('field:info')) {
+    if ($cached = $cache_token->get('field:info')) {
       $info = $cached->data;
     }
     else {
@@ -1340,8 +1343,8 @@ function _token_field_info($field_name = NULL) {
         }
       }
 
-      drupal_alter('token_field_info', $info);
-      cache('token')->set('field:info', $info);
+      backdrop_alter('token_field_info', $info);
+      $cache_token->set('field:info', $info);
     }
   }
 
@@ -1425,7 +1428,7 @@ function field_tokens($type, $tokens, array $data = array(), array $options = ar
         $field_output = field_view_field($entity_type, $entity, $field_name, 'token', $langcode);
         $field_output['#token_options'] = $options;
         $field_output['#pre_render'][] = 'token_pre_render_field_token';
-        $replacements[$original] = drupal_render($field_output);
+        $replacements[$original] = backdrop_render($field_output);
       }
     }
 
