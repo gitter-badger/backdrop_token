@@ -385,8 +385,7 @@ function token_tokens($type, $tokens, array $data = array(), array $options = ar
   if ($type == 'date') {
     $date = !empty($data['date']) ? $data['date'] : REQUEST_TIME;
 
-    // @todo Remove when http://drupal.org/node/1173706 is fixed.
-    $date_format_types = system_get_date_types();
+    $date_format_types = system_get_date_formats();
     foreach ($tokens as $name => $original) {
       if (isset($date_format_types[$name]) && _token_module('date', $name) == 'token') {
         $replacements[$original] = format_date($date, $name, '', NULL, $language_code);
@@ -818,7 +817,7 @@ function token_tokens($type, $tokens, array $data = array(), array $options = ar
     $array = $data['array'];
 
     $sort = isset($options['array sort']) ? $options['array sort'] : TRUE;
-    $keys = element_children($array, $sort);
+    $keys = token_element_children($array, $sort);
 
     foreach ($tokens as $name => $original) {
       switch ($name) {
@@ -961,11 +960,11 @@ function token_tokens_alter(array &$replacements, array $context) {
       switch ($name) {
         case 'author':
           // http://drupal.org/node/1185842 was fixed in core release 7.9.
-          if (version_compare(VERSION, '7.9', '<')) {
+          //if (version_compare(VERSION, '7.9', '<')) {
             $account = user_load($node->uid);
             $name = format_username($account);
             $replacements[$original] = $sanitize ? check_plain($name) : $name;
-          }
+          //}
           break;
       }
     }
@@ -979,11 +978,11 @@ function token_tokens_alter(array &$replacements, array $context) {
       switch ($name) {
         case 'owner':
           // http://drupal.org/node/978028 was fixed in core release 7.7.
-          if (version_compare(VERSION, '7.7', '<')) {
+          //if (version_compare(VERSION, '7.7', '<')) {
             $account = user_load($file->uid);
             $name = format_username($account);
             $replacements[$original] = $sanitize ? check_plain($name) : $name;
-          }
+          //}
           break;
       }
     }
