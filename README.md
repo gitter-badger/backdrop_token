@@ -2,6 +2,8 @@ Implementation of Token 1.5 to [Backdrop](backdropcms.org) CMS
 
 #Usage
 
+[![Join the chat at https://gitter.im/miromichalicka/backdrop_token](https://badges.gitter.im/miromichalicka/backdrop_token.svg)](https://gitter.im/miromichalicka/backdrop_token?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 Go to modules/contrib in your Backdrop CMS installation and clone this project
 
 ```
